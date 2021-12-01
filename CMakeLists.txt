@@ -38,15 +38,24 @@ endif()
 
 include_directories(
 ${PROJECT_SOURCE_DIR}
+${PROJECT_SOURCE_DIR}/include
 )
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 
+add_library(${PROJECT_NAME} SHARED
+src/frame.cpp
+src/sorbe.cpp
+)
+
+target_link_libraries(${PROJECT_NAME}
+${OpenCV_LIBS}
+)
 
 # Build examples
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/out)
 
-add_executable(sorbe
-src/main.cpp)
-target_link_libraries(sorbe ${OpenCV_LIBS})
+add_executable(runner
+runner.cpp)
+target_link_libraries(runner ${PROJECT_NAME})
