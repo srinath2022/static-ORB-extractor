@@ -44,8 +44,8 @@ ${PROJECT_SOURCE_DIR}/include
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 
 add_library(${PROJECT_NAME} SHARED
-src/frame.cpp
-src/sorbe.cpp
+src/ORBextractor.cc
+src/SORBextractor.cc
 )
 
 target_link_libraries(${PROJECT_NAME}
@@ -57,5 +57,5 @@ ${OpenCV_LIBS}
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/out)
 
 add_executable(runner
-runner.cpp)
+runner.cc)
 target_link_libraries(runner ${PROJECT_NAME})

@@ -12,7 +12,7 @@
 using namespace std;
 using namespace cv;
 
-#include "sorbe.h"
+#include "SORBextractor.h"
 
 void LoadImagesTUM(const string &strFile, vector<string> &vstrImageFilenames,
                 vector<double> &vTimestamps);
@@ -20,7 +20,7 @@ void LoadImagesTUM(const string &strFile, vector<string> &vstrImageFilenames,
 class Visualiser{
 public:
 	~Visualiser(){destroyAllWindows();}
-	void show(Frame* f){
+	void show(ORB_SLAM2::StorageFrame* f){
 		Mat im = f->image;
 		drawKeypoints(im, f->staticKeyPoints, im, Scalar(255,0,0));
 		drawKeypoints(im, f->dynamicKeyPoints, im, Scalar(0,0,255));
@@ -30,8 +30,8 @@ public:
 };
 
 int main(int argc, char*argv[]){
-	if(argc != 5){
-		cout<<"Usage : ./runner path_to_sequence n_previous_frames dataset THRESHOLD"<<endl;
+	if(argc != 6){
+		cout<<"Usage : ./runner path_to_sequence n_previous_frames dataset THRESHOLD slam_mode"<<endl;
 		return -1;
 	}
 
@@ -40,6 +40,7 @@ int main(int argc, char*argv[]){
 	int n_previous_frames = strtol(argv[2],NULL,0);
 	string dataset = string(argv[3]);
 	double DYNAMIC_DIST_THRESHOLD = stod(argv[4]);
+	int slam_mode = strtol(argv[5],NULL,0);
 
 	if(dataset=="TUM"){
 		vector<string> vstrImageFilenames;
@@ -48,7 +49,7 @@ int main(int argc, char*argv[]){
     	LoadImagesTUM(strFile, vstrImageFilenames, vTimestamps);
     	int nImages = vstrImageFilenames.size();
 
-    	StaticORBExtractor* SORBE = new StaticORBExtractor(n_previous_frames, 500, DYNAMIC_DIST_THRESHOLD);
+    	ORB_SLAM2::SORBextractor* SORBE = new ORB_SLAM2::SORBextractor(n_previous_frames, DYNAMIC_DIST_THRESHOLD, 1000, 1.2, 8, 20, 7);
     	Visualiser* visualiser = new Visualiser();
 
     	cout<<endl;
@@ -64,10 +65,21 @@ int main(int argc, char*argv[]){
 	                 << path_to_sequence << "/" << vstrImageFilenames[i] << endl;
 	            return -1;
 	        }
-	        Frame* f = SORBE->extract(im);
-	        if(f != NULL){
-	        	visualiser->show(f);
-	        }
+	        Mat imGray;
+			cvtColor(im, imGray, cv::COLOR_BGR2GRAY);
+			if(slam_mode){
+				vector<KeyPoint> keypoints_s;
+				vector<KeyPoint> keypoints_d;
+				Mat descriptors;
+				(*SORBE)(imGray, cv::Mat(), keypoints_s, descriptors);
+				ORB_SLAM2::StorageFrame* f = new ORB_SLAM2::StorageFrame(imGray, keypoints_s, keypoints_d);
+				visualiser->show(f);
+			}else{
+				ORB_SLAM2::StorageFrame* f = SORBE->extract(imGray);
+		        if(f != NULL){
+		        	visualiser->show(f);
+		        }
+			}
     	}
 	}
 	else { throw("unknown dataset"); return -1; }
